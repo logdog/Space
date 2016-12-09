@@ -1,9 +1,11 @@
+import java.awt.Color;
+import java.awt.Graphics;
 
 public class Entity {
 
 	public double mass=100, width=100, height=100;
 	public Vector s, velocity, acceleration;
-	public int col = 0xff0000;
+	public Color col = Color.white;
 	
 	
 	public Entity(Vector s, Vector v0) {
@@ -13,14 +15,15 @@ public class Entity {
 	}
 	
 	public void update() {	
-		velocity.x += acceleration.x * 1/60;
-		velocity.y += acceleration.y * 1/60;
+		velocity.x += acceleration.x * 1/30;
+		velocity.y += acceleration.y * 1/30;
 		
 		s.x += velocity.x;
 		s.y += velocity.y;
 	}
 	
-	public void render(Screen screen) {
-		screen.fillRect((int)(s.x-width/2), (int)(Game.HEIGHT-(s.y+height/2)), (int)(width), (int)(height), col);
+	public void render(Graphics g, double scale) {
+		g.setColor(col);
+		g.fillRect((int)(s.x*scale), (int)((s.y*scale)), (int)(width*scale), (int)(height*scale));
 	}
 }

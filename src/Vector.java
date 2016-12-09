@@ -37,5 +37,9 @@ public class Vector {
 	public Vector scale(double d) {
 		return new Vector(d * x, d * y);
 	}
+	
+	public String toString() {
+		return "x: " + x + ", y: " + y + ", Ø: " + theta + ", |v|: " + magnitude;
+	}
  	
 }

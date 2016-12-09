@@ -5,12 +5,21 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
-import java.awt.image.BufferStrategy;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferInt;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.beans.PropertyChangeListener;
 
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.BoxLayout;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
 import javax.swing.JSlider;
+import javax.swing.KeyStroke;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -21,25 +30,21 @@ public class Game extends Canvas implements Runnable {
 	public static JFrame frame;
 	private Thread thread;
 	private boolean running = false;
-	private Screen screen;
 	private Scene scene;
 	public static int highscore;
 	public static String title = "Space";
-	private static Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-	public static final int WIDTH = (int) (screenSize.getWidth()), HEIGHT = (int) (screenSize.getHeight()), SCALE = 1;
 	public static double accelGravity = -9.81;
+	private JScrollPane sp;
+	
+	public static double SCALE = 1.0;
 	
 	private static JSlider slider;
 	
-	private BufferedImage image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
-	public int[] pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
-
+	public static int WIDTH=1440, HEIGHT=900;
+	
 	public Game() {
-		Dimension size = new Dimension(WIDTH * SCALE, HEIGHT * SCALE);
-		setPreferredSize(size);
-
 		frame = new JFrame();
-		screen = new Screen(WIDTH, HEIGHT);
+		
 		scene = new Scene();
 		slider = new JSlider(0, 981 * 10, 981);
 		slider.setMajorTickSpacing(981);
@@ -52,8 +57,31 @@ public class Game extends Canvas implements Runnable {
 			}
 		});
 		
-		addKeyListener(scene);
+		scene.getInputMap().put(KeyStroke.getKeyStroke("UP"), "zoom in");
+		scene.getActionMap().put("zoom in", new KeyAction(1.33));
+		
+		scene.getInputMap().put(KeyStroke.getKeyStroke("DOWN"), "zoom out");
+		scene.getActionMap().put("zoom out", new KeyAction(1/1.33));
+		
+		sp = new JScrollPane(scene);
+		sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+		sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
 	}
+	
+	private class KeyAction extends AbstractAction {
+
+		private double scalar;
+		
+        KeyAction(double scalar) {
+
+            this.scalar = scalar;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+        	SCALE *= scalar;
+        }
+    }
 
 	public synchronized void start() {
 		running = true;
@@ -75,7 +103,7 @@ public class Game extends Canvas implements Runnable {
 
 		long lastTime = System.nanoTime();
 		long timer = System.currentTimeMillis();
-		final double ns = 1000000000.0 / 60.0;
+		final double ns = 1000000000.0 / 30.0;
 		double delta = 0;
 		int frames = 0, updates = 0;
 		requestFocus();
@@ -104,39 +132,24 @@ public class Game extends Canvas implements Runnable {
 	}
 	
 	public void render(){
-		BufferStrategy bs = getBufferStrategy();
-		if (bs == null) {
-			createBufferStrategy(3);
-			return;
-		}
-		
-		//screen.clear();
-		scene.render(screen);
-		
-		for(int i = 0; i < pixels.length; i++){
-			pixels[i] = screen.pixels[i];
-		}
-		
-		Graphics g = bs.getDrawGraphics();
-		g.drawImage(image, 0, 0, getWidth(), getHeight(), null);
-		g.dispose();
-		bs.show();
-		
+		scene.repaint();
 	}
 
 	public static void main(String[] args) {
 		Game game = new Game();
 		
-		frame.setResizable(false);
-		frame.setLayout(new BorderLayout());
+		frame.setMinimumSize(Toolkit.getDefaultToolkit().getScreenSize());
+		frame.setUndecorated(false);
+		frame.setResizable(true);
+		frame.setLayout(new GridLayout());
 		frame.setTitle(title);
-
-		frame.add(game, BorderLayout.CENTER);
-		//frame.add(slider, BorderLayout.SOUTH);
+		
+		frame.add(game.sp, 0);
+		//frame.add(slider, 1);
 		frame.pack();
 
 		frame.setLocationRelativeTo(null);
-		frame.setBackground(Color.green);
+		frame.setBackground(Color.black);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
 		
